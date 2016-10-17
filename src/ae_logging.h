@@ -2,6 +2,27 @@
 #include "platform.h"
 #include "tinyformat/tinyformat.h"
 
+static String str(Duration d){
+	U64 nanos = d.count();
+	double seconds = static_cast<double>(nanos) / 1000.0 / 1000.0 / 1000.0;
+	String time_str = tfm::format("%10f", seconds);
+	int len = 17;
+	//int len = 14;
+	while(time_str.size() < len){
+		time_str += "0";
+	}
+	while(time_str.size() > len){
+		time_str.pop_back();
+	}
+	return time_str;
+}
+
+static String str(Time t){
+	Duration d = t.time_since_epoch();
+	String s = str(d);
+	return s;
+}
+
 enum ELevel {
 	e_debug,
 	e_verbose,
@@ -44,26 +65,10 @@ struct LogEntry {
 		String level_str(
 			level_cstr[m_level]
 		);
-		Duration d = m_time.time_since_epoch();
-		U64 nanos = d.count();
 
-		U64 k = 1000;
-		U64 micros = nanos / k;
-		U64 millis = micros / k;
+		String now_str = str(m_time);
 
-		double s = static_cast<double>(nanos) / 1000.0 / 1000.0 / 1000.0;
-
-		String time_str = tfm::format("%10f", s);
-		//int len = 17;
-		int len = 14;
-		while(time_str.size() < len){
-			time_str += "0";
-		}
-		while(time_str.size() > len){
-			time_str.pop_back();
-		}
-
-		String m = time_str + " [" + m_ndc + "] " + level_str + ": " + m_message;
+		String m = now_str + " [" + m_ndc + "] " + level_str + ": " + m_message;
 		return m;
 	}
 
