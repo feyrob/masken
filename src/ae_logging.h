@@ -4,17 +4,18 @@
 
 static String str(Duration d){
 	U64 nanos = d.count();
-	double seconds = static_cast<double>(nanos) / 1000.0 / 1000.0 / 1000.0;
-	String time_str = tfm::format("%10f", seconds);
-	int len = 17;
-	//int len = 14;
-	while(time_str.size() < len){
-		time_str += "0";
+	U64 seconds = nanos / 1000 / 1000 / 1000;
+	U64 nanos_without_seconds = nanos % (1000 * 1000 * 1000);
+	String nano_str = tfm::format("%s", nanos_without_seconds);
+	while(nano_str.size() < 9){
+		nano_str = String("0") + nano_str;
 	}
-	while(time_str.size() > len){
-		time_str.pop_back();
+	String seconds_str = tfm::format("%s", seconds);
+	while(seconds_str.size() < 3){
+		seconds_str = String("0") + seconds_str;
 	}
-	return time_str;
+	String m = seconds_str + "." + nano_str;
+	return m;
 }
 
 static String str(Time t){
@@ -88,9 +89,44 @@ struct LogEntry {
 	}
 };
 
+struct ILoggerBackend{
+	virtual void log(LogEntry& log_entry) = 0;
+};
+
+struct ConsoleLoggerBackend : public ILoggerBackend{
+	Time m_start_time;
+	ConsoleLoggerBackend(Time start_time){
+		m_start_time = start_time;
+	}
+
+	void log(LogEntry& log_entry){
+
+		auto duration_since_start = log_entry.m_time - m_start_time;
+
+		String level_str(
+			level_cstr[log_entry.m_level]
+		);
+
+		String duration_since_start_str = str(duration_since_start);
+
+		String m = duration_since_start_str + " [" + log_entry.m_ndc + "] " + level_str + ": " + log_entry.m_message;
+		
+		printf(
+			"%s\n",
+			m.c_str()
+		);
+	}
+
+};
+
 struct Log {
+	std::vector<ILoggerBackend*> m_backends;
 	Log() {}
 	~Log() {}
+
+	void add_backend(ILoggerBackend* backend){
+		m_backends.push_back(backend);
+	}
 
 	static Log& instance() {
 		static Log s;
@@ -99,11 +135,9 @@ struct Log {
 
 	void log(
 		LogEntry entry) {
-		String s = entry.to_string();
-		printf(
-		    "%s\n",
-		    s.c_str()
-		);
+		for(auto backend:m_backends){
+			backend->log(entry);
+		}
 	}
 
 	static void slog(

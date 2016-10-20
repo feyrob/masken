@@ -19,13 +19,15 @@ start_time=$(date +%s.%N)
 
 
 if [ $enable_pch = "true" ]; then
+	echo pch
 	mkdir -p temp
 	time clang++ -g -std=c++1y -x c++-header src/platform.h -o temp/platform.h.pch -Wno-pragma-once-outside-header
 fi
 
 if [ $enable_compile = "true" ]; then
+	echo compile
 	mkdir -p build
-	time clang++ -g -std=c++1y -include temp/platform.h src/unity.cpp -o build/masken
+	time clang++ -g -std=c++1y -include temp/platform.h src/unity.cpp -o build/masken -lglfw 
 fi
 
 
