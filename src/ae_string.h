@@ -24,10 +24,16 @@ static String str(Time t){
 	return s;
 }
 
-static String str(int i, int min_width){
-	String m = tfm::format("%i",i);
-	while(m.size() < min_width){
+static String str2(int i, int min_width){
+	U64 u2 = i;
+	String m = tfm::format("%llu",u2);
+	while(m.size() < min_width -1){
 		m = String("0") + m;
+	}
+	if(i < 0){
+		m = String("-") + m;
+	}else{
+		m = String("+") + m;
 	}
 	return m;
 }
@@ -39,6 +45,25 @@ static String str(int i){
 
 static String str(float f){
 	String m = tfm::format("%f",f);
+	return m;
+}
+
+static String str3(float f, int min_leading, int trailing){
+	float pf = f;
+	if(f < 0.0f){
+		pf = -pf;
+	}
+	String format = tfm::format("%%.%if",trailing);
+	String m = tfm::format(format.c_str(),pf);
+	int min_width = min_leading + 1 + trailing;
+	while(m.size() < min_width){
+		m = String(0) + m;
+	}
+	if(f < 0.0f){
+		m = String("-") + m;
+	}else{
+		m = String("+") + m;
+	}
 	return m;
 }
 

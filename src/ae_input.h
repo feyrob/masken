@@ -18,7 +18,7 @@ struct KeyInput{
 	String to_string(){
 		String m("{ ");
 		m+= VARSTR(time) + " ";
-		m+= VARSTR2(key,3) + " ";
+		m+= VARSTR2(key,4) + " ";
 		const char* key_name = glfwGetKeyName(key, scancode);
 		m+= "key_name:";
 		if(key_name){
@@ -29,7 +29,7 @@ struct KeyInput{
 			m+= "nil";
 		}
 		m+= " ";
-		m+= VARSTR2(scancode,3) + " ";
+		m+= VARSTR2(scancode,4) + " ";
 		m+= "action:";
 		String a(key_action_cstr[action]);
 		while(a.size() < 7){

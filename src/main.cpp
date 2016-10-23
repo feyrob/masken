@@ -26,7 +26,24 @@ struct GameInput{
 	float x;
 	float y;
 	float jump;
+	String to_string(){
+		String m("{");
+		m+= VARSTR3(x,1,2) + " " + VARSTR3(y,1,2) + " " + VARSTR3(jump,1,1);
+		m+= "}";
+		return m;
+	}
+	//bool is_equal(GameInput rhs){
+    //return ( 0 == std::memcmp( this, &rhs, sizeof( GameInput ) ) );
+	//}
+	bool is_equal(GameInput rhs){
+		bool b_equal = (x == rhs.x) && (y == rhs.y) && (jump == rhs.jump);
+		return b_equal;
+	}
 };
+
+static String str(GameInput gi){
+	return gi.to_string();
+}
 
 GameInput create_game_input(JoystickState joystick_state){
 	float x = joystick_state.axes[0];
@@ -35,7 +52,6 @@ GameInput create_game_input(JoystickState joystick_state){
 	GameInput game_input{x,y,jump};
 	return game_input;
 }
-
 
 struct JoystickConnectionEvent{
 	int joy;
@@ -116,12 +132,13 @@ auto main(int argc, char** argv) -> int{
 
 	Log::info("app",VARSTR(init_duration));
 
+	GameInput game_input;
 	bool keep_running = true;
 	while (keep_running)
 	{
 
-		GameInput game_input;
 		{
+			GameInput new_game_input;
 			KeyInput key_input;
 			while(g_key_input_queue.pop(key_input)){
 				Log::verbose( "input", String("popped ") + VARSTR(key_input));
@@ -129,11 +146,12 @@ auto main(int argc, char** argv) -> int{
 			for(auto joystick : joysticks) {
 				auto joystick_state = get_joystick_state(joystick);
 				//Log::verbose("input",VARSTR(joystick_state));
-				//GameInput game_input {joystick_state};
-				//return game_input;
-				game_input = create_game_input(joystick_state);
-				if(game_input.jump > 0.3){
-					int i = 2;
+				new_game_input = create_game_input(joystick_state);
+				if(game_input.is_equal(new_game_input)){
+					// nothing
+				} else{
+					Log::verbose("input/game", VARSTR(game_input) + String(" -> ") + VARSTR(new_game_input));
+					game_input = new_game_input;
 				}
 
 			}
@@ -145,7 +163,7 @@ auto main(int argc, char** argv) -> int{
 			keep_running = false;
 		}
 		if(keep_running){
-			busy_sleep(seconds(0.2));
+			//busy_sleep(seconds(0.2));
 		}
 	}
 
