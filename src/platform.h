@@ -2,14 +2,12 @@
 
 #include <GLFW/glfw3.h>
 #include "platform_time.h"
-#include <string>
+#include "platform_basic_types.h"
 #include <stdio.h>
 #include <vector>
-#include <inttypes.h>
+#include <atomic>
+#include "tinyformat/tinyformat.h"
 
-typedef uint64_t U64;
-typedef std::string String;
-
-
-#define VARSTR(v) (String(#v) + ":" + str(v))
+#define VARSTR(v) (String(#v) + ":" + str(v) )
+#define VARSTR2(v,v2) (String(#v) + ":" + str(v,v2) )
 

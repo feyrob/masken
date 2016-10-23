@@ -28,5 +28,9 @@
 *.out
 *.app
 
+# vim
+*.swp
+
+# project specific
 /build
 

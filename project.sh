@@ -1,5 +1,8 @@
+set -e
+echo "#############################################################################"
 enable_pch=false
 enable_compile=false
+enable_run=false
 
 if [ $1 = "pch" ]; then
 	enable_pch=true
@@ -12,6 +15,16 @@ fi
 if [ $1 = "build" ]; then
 	enable_pch=true
 	enable_compile=true
+fi
+
+if [ $1 = "run" ]; then
+	enable_run=true
+fi
+
+if [ $1 = "brun" ]; then
+	enable_pch=true
+	enable_compile=true
+	enable_run=true
 fi
 
 
@@ -31,7 +44,12 @@ if [ $enable_compile = "true" ]; then
 fi
 
 
-end_time=$(date +%s.%N)
-duration=$(echo "$end_time - $start_time" | bc)
-echo $duration
+build_end_time=$(date +%s.%N)
+build_duration=$(echo "$build_end_time - $start_time" | bc)
+echo build time: $build_duration
+
+if [ $enable_run = "true" ]; then
+	echo run
+	build/masken
+fi
 
