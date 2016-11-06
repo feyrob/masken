@@ -43,6 +43,11 @@ static String str(int i){
 	return m;
 }
 
+static String str(U64 i){
+	String m = tfm::format("%llu",i);
+	return m;
+}
+
 static String str(float f){
 	String m = tfm::format("%f",f);
 	return m;

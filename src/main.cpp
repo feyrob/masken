@@ -1,6 +1,12 @@
 #include "ae.h"
 
+#include <AL/al.h>
+#include <AL/alc.h>
+#include <dlfcn.h>
+
 using namespace std;
+
+typedef ALCdevice* F_alcOpenDevice(const ALCchar* devicename);
 
 CircularFifo<KeyInput, 16> g_key_input_queue;
 
@@ -97,13 +103,38 @@ void print_joysticks(vector<int> joysticks){
 	}
 }
 
-auto main(int argc, char** argv) -> int{
+int
+main(int argc, char** argv) {
+
 	auto start_time = now();
 
 	auto console_logger_backend = new ConsoleLoggerBackend(start_time);
 	Log::instance().add_backend(console_logger_backend);
 
 	Log::info("app",VARSTR(start_time));
+
+	void* handle = nullptr;
+	handle = dlopen("/usr/lib/libopenal.so", RTLD_LAZY);
+	if(handle){
+		Log::verbose("audio","success loading libopenal.so");
+	}else{
+		Log::warning("audio","failure loading libopenal.so");
+	}
+	// clean existing errors if any
+	dlerror();
+
+	F_alcOpenDevice* f_alcOpenDevice = nullptr;
+	f_alcOpenDevice = (F_alcOpenDevice*)dlsym(handle, "alcOpenDevice");
+
+	//ALCdevice* device = alcOpenDevice(nullptr);
+	ALCdevice* audio_device = f_alcOpenDevice(nullptr);
+	if(audio_device){
+		Log::verbose("audio","device open success");
+	}else{
+		Log::warning("audio","device open failure");
+	}
+
+
 
 	GLFWwindow* window;
 	if (!glfwInit()){
@@ -133,6 +164,7 @@ auto main(int argc, char** argv) -> int{
 	Log::info("app",VARSTR(init_duration));
 
 	GameInput game_input;
+	U64 frame_idx(0);
 	bool keep_running = true;
 	while (keep_running)
 	{
@@ -145,7 +177,6 @@ auto main(int argc, char** argv) -> int{
 			}
 			for(auto joystick : joysticks) {
 				auto joystick_state = get_joystick_state(joystick);
-				//Log::verbose("input",VARSTR(joystick_state));
 				new_game_input = create_game_input(joystick_state);
 				if(game_input.is_equal(new_game_input)){
 					// nothing
@@ -163,8 +194,9 @@ auto main(int argc, char** argv) -> int{
 			keep_running = false;
 		}
 		if(keep_running){
-			//busy_sleep(seconds(0.2));
+			busy_sleep(seconds(0.005));
 		}
+		++frame_idx;
 	}
 
 	glfwTerminate();

@@ -11,7 +11,25 @@ enum ELevel {
 	e_error
 };
 
-char const* level_cstr[] = {
+const char* styleResetAll = "\033[0m";
+//const char* styleResetColors = "\033[39;49m";
+const char* styleRed = "\033[31m";
+const char* styleGreen = "\033[32m";
+const char* styleGreenBright = "\033[1;32m";
+const char* styleYellow = "\033[33m";
+const char* styleYellowBright = "\033[1;33m";
+const char* styleBlue = "\033[34m";
+const char* styleBlueBright = "\033[1;34m";
+const char* styleMagenta = "\033[35m";
+const char* styleMagentaBright = "\033[1;35m";
+const char* styleCyan = "\033[36m";
+const char* styleCyanBright = "\033[1;36m";
+const char* styleWhite = "\033[37m";
+const char* styleWhiteBright = "\033[1;37m";
+const char* styleBlackOnWhite= "\033[30;47m";
+const char* styleGrayDark = "\033[1;30m";
+
+char const* c_levelStr[] = {
 	"debug", 
 	"verbose", 
 	"info", 
@@ -19,6 +37,22 @@ char const* level_cstr[] = {
 	"warning", 
 	"error"
 };
+
+char const* c_levelStyle[] = {
+	// debug
+	styleWhiteBright,
+	// verbose
+	styleMagentaBright,
+	// info
+	styleCyan,
+	// attention 
+	styleGreen,
+	// warning
+	styleYellow,
+	// error
+	styleRed
+};
+
 
 struct LogEntry {
 	Time m_time;
@@ -39,17 +73,6 @@ struct LogEntry {
 			m_ndc(ndc),
 			m_message(message)
 	{}
-
-	String to_string() {
-		String level_str(
-			level_cstr[m_level]
-		);
-
-		String now_str = str(m_time);
-
-		String m = now_str + " [" + m_ndc + "] " + level_str + ": " + m_message;
-		return m;
-	}
 
 	static LogEntry create(
 		ELevel level,
@@ -81,13 +104,19 @@ struct ConsoleLoggerBackend : public ILoggerBackend{
 
 		auto duration_since_start = log_entry.m_time - m_start_time;
 
-		String level_str(
-			level_cstr[log_entry.m_level]
+		String levelStr(
+			c_levelStr[log_entry.m_level]
 		);
+		while(levelStr.size() < 9){
+			levelStr += " ";
+		}
+		auto style = c_levelStyle[log_entry.m_level];
 
 		String duration_since_start_str = str(duration_since_start);
 
-		String m = duration_since_start_str + " [" + log_entry.m_ndc + "] " + level_str + ": " + log_entry.m_message;
+		String styledLevelStr = style + levelStr + styleResetAll; 
+
+		String m = duration_since_start_str + " " + styledLevelStr + " [" + log_entry.m_ndc + "] " + log_entry.m_message;
 		
 		printf(
 			"%s\n",

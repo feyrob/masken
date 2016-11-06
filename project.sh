@@ -27,20 +27,33 @@ if [ $1 = "brun" ]; then
 	enable_run=true
 fi
 
+common_compiler_options="-std=c++1y"
+
+if [ $1 = "fast" ]; then
+	enable_pch=true
+	enable_compile=true
+	enable_run=true
+else
+	common_compiler_options="${common_compiler_options} -g"
+fi
 
 start_time=$(date +%s.%N)
 
 
 if [ $enable_pch = "true" ]; then
-	echo pch
+	echo "# pch"
 	mkdir -p temp
-	time clang++ -g -std=c++1y -x c++-header src/platform.h -o temp/platform.h.pch -Wno-pragma-once-outside-header
+	set -x
+	time clang++ $common_compiler_options -x c++-header src/platform.h -o temp/platform.h.pch -Wno-pragma-once-outside-header
+	set +x
 fi
 
 if [ $enable_compile = "true" ]; then
-	echo compile
+	echo "# compile"
 	mkdir -p build
-	time clang++ -g -std=c++1y -include temp/platform.h src/unity.cpp -o build/masken -lglfw 
+	set -x
+	time clang++ $common_compiler_options -include temp/platform.h src/unity.cpp -o build/masken -lglfw -ldl
+	set +x
 fi
 
 
