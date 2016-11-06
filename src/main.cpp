@@ -3,12 +3,23 @@
 #include <AL/al.h>
 #include <AL/alc.h>
 #include <dlfcn.h>
+#include <cmath>
 
 using namespace std;
 
 typedef ALCdevice* F_alcOpenDevice(const ALCchar* devicename);
+typedef ALCcontext* F_alcCreateContext(ALCdevice *device, const ALCint* attrlist);
+typedef ALCboolean F_alcMakeContextCurrent(ALCcontext *context);
+typedef void F_alListenerfv(ALenum param, const ALfloat *values);
+typedef void F_alGenBuffers(ALsizei n, ALuint *buffers);
+typedef void F_alBufferData(ALuint buffer, ALenum format, const ALvoid *data, ALsizei size, ALsizei freq);
+typedef void F_alGenSources(ALsizei n, ALuint *sources);
+typedef void F_alSourcei(ALuint source, ALenum param, ALint value);
+typedef void F_alSourcePlay(ALuint source);
 
 CircularFifo<KeyInput, 16> g_key_input_queue;
+
+const double c_pi = 3.14159265358979323846;
 
 static void key_callback(
 	GLFWwindow* window, 
@@ -103,6 +114,11 @@ void print_joysticks(vector<int> joysticks){
 	}
 }
 
+
+const int c_audioBufferCount= 7;
+
+ALuint	g_audioBuffers[c_audioBufferCount];
+
 int
 main(int argc, char** argv) {
 
@@ -126,15 +142,69 @@ main(int argc, char** argv) {
 	F_alcOpenDevice* f_alcOpenDevice = nullptr;
 	f_alcOpenDevice = (F_alcOpenDevice*)dlsym(handle, "alcOpenDevice");
 
-	//ALCdevice* device = alcOpenDevice(nullptr);
+
 	ALCdevice* audio_device = f_alcOpenDevice(nullptr);
 	if(audio_device){
-		Log::verbose("audio","device open success");
+		Log::verbose("audio","device opening success");
 	}else{
-		Log::warning("audio","device open failure");
+		Log::warning("audio","device opening failure");
+	}
+
+	F_alcCreateContext* f_alcCreateContext = nullptr;
+	f_alcCreateContext = (F_alcCreateContext*)dlsym(handle, "alcCreateContext");
+	ALCcontext* audio_context = f_alcCreateContext(audio_device, NULL);
+	if(audio_context){
+		Log::verbose("audio","context creation success");
+	}else{
+		Log::warning("audio","context creation failure");
+	}
+
+	F_alcMakeContextCurrent* f_alcMakeContextCurrent = nullptr;
+	f_alcMakeContextCurrent = (F_alcMakeContextCurrent*)dlsym(handle, "alcMakeContextCurrent");
+
+	auto success = f_alcMakeContextCurrent(audio_context);
+	if(success){
+		Log::verbose("audio","making context current success");
+	}else{
+		Log::warning("audio","making context current failure");
 	}
 
 
+	F_alListenerfv* f_alListenerfv = (F_alListenerfv*)dlsym(handle, "alListenerfv");
+	F_alGenBuffers* f_alGenBuffers = (F_alGenBuffers*)dlsym(handle, "alGenBuffers");
+	F_alBufferData* f_alBufferData = (F_alBufferData*)dlsym(handle, "alBufferData");
+
+	F_alGenSources* f_alGenSources = (F_alGenSources*)dlsym(handle, "alGenSources");
+	F_alSourcei* f_alSourcei = (F_alSourcei*)dlsym(handle, "alSourcei");
+	F_alSourcePlay* f_alSourcePlay = (F_alSourcePlay*)dlsym(handle, "alSourcePlay");
+
+	ALfloat listenerPos[]={0.0,0.0,0.0};
+	ALfloat listenerVel[]={0.0,0.0,0.0};
+	ALfloat	listenerOri[]={0.0,0.0,-1.0, 0.0,1.0,0.0};	// Listener facing into the screen
+
+	f_alListenerfv(AL_POSITION,listenerPos); 	// Position ...
+	f_alListenerfv(AL_VELOCITY,listenerVel); 	// Velocity ...
+	f_alListenerfv(AL_ORIENTATION,listenerOri); 	// Orientation ...
+	f_alGenBuffers(c_audioBufferCount, g_audioBuffers);  // Generate Buffers
+
+	ALuint buf1 = g_audioBuffers[0];
+
+	float freq = 440.0f;
+	int secondCount = 4;
+	unsigned sample_rate = 22050;
+	size_t buf_size = secondCount * sample_rate;
+
+	short *samples;
+	samples = new short[buf_size];
+	for(int i=0; i<buf_size; ++i) {
+			samples[i] = 32760 * sin( (2.f*float(c_pi)*freq)/sample_rate * i );
+	}
+	f_alBufferData(buf1, AL_FORMAT_MONO16, samples, buf_size, sample_rate);
+
+	ALuint src = 0;
+	f_alGenSources(1, &src);
+	f_alSourcei(src, AL_BUFFER, buf1);
+	f_alSourcePlay(src);
 
 	GLFWwindow* window;
 	if (!glfwInit()){

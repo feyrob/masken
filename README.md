@@ -10,5 +10,5 @@ A little game I do in my spare time.
 
 ## Assumptions
 * minimum disk read speed: 520 MiB/s (43.3 MiB in 1/12s)
-* max display refresh rate: 720Hz
+* max display refresh rate: 200Hz
 
