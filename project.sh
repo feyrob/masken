@@ -52,7 +52,7 @@ if [ $enable_compile = "true" ]; then
 	echo "# compile"
 	mkdir -p build
 	set -x
-	time clang++ $common_compiler_options -include temp/platform.h src/unity.cpp -o build/masken -lglfw -ldl
+	time clang++ $common_compiler_options -include temp/platform.h src/main.cpp -o build/masken -lglfw -ldl
 	set +x
 fi
 

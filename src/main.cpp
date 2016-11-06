@@ -253,6 +253,8 @@ main(int argc, char** argv) {
 				} else{
 					Log::verbose("input/game", VARSTR(game_input) + String(" -> ") + VARSTR(new_game_input));
 					game_input = new_game_input;
+
+					f_alSourcePlay(src);
 				}
 
 			}

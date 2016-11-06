@@ -3,7 +3,8 @@
 A little game I do in my spare time.
 
 ## Project Goals
-* unnoticable startup and loading times (targeting 1/12 of a second)
+* unnoticable loading times (targeting 1/12 of a second)
+* low startup time (target is to stay under 1 second)
 * low compile time (target is to stay under 1 second)
 * assets are presented correcly (e.g. no streaming in of textures)
 * run at display refresh rate
