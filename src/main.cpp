@@ -21,6 +21,14 @@ CircularFifo<KeyInput, 16> g_key_input_queue;
 
 const double c_pi = 3.14159265358979323846;
 
+
+U64 cyc(){
+	U32 lo;
+	U32 hi;
+	__asm__ __volatile__ ("rdtsc" : "=a" (lo), "=d" (hi));
+	return ((U64)hi << 32) | lo;
+}
+
 static void key_callback(
 	GLFWwindow* window, 
 	int key, 
@@ -123,6 +131,7 @@ int
 main(int argc, char** argv) {
 
 	auto start_time = now();
+
 
 	auto console_logger_backend = new ConsoleLoggerBackend(start_time);
 	Log::instance().add_backend(console_logger_backend);
@@ -236,6 +245,9 @@ main(int argc, char** argv) {
 	GameInput game_input;
 	U64 frame_idx(0);
 	bool keep_running = true;
+
+	U64 previousCyc = cyc();
+
 	while (keep_running)
 	{
 
@@ -269,6 +281,13 @@ main(int argc, char** argv) {
 			busy_sleep(seconds(0.005));
 		}
 		++frame_idx;
+		U64 currentCyc = cyc();
+
+		U64 deltaCyc = currentCyc - previousCyc;
+		U64 deltaCyc3 = deltaCyc / 1000;
+
+		//Log::debug("cyc",VARSTR(deltaCyc3));
+		previousCyc = currentCyc;
 	}
 
 	glfwTerminate();
@@ -276,6 +295,7 @@ main(int argc, char** argv) {
 	auto end_time = now();
 	auto run_duration = end_time - start_time;
 	Log::info("app",VARSTR(run_duration));
+
 
 	return 0;
 }
