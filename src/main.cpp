@@ -70,55 +70,55 @@ static String str(GameInput gi){
 	return gi.to_string();
 }
 
-GameInput create_game_input(JoystickState joystick_state){
-	float x = joystick_state.axes[0];
-	float y = joystick_state.axes[1];
-	float jump = static_cast<float>(joystick_state.buttons[1]);
-	GameInput game_input{x,y,jump};
-	return game_input;
+GameInput createGameInput(GamepadState state){
+	float x = state.axes[0];
+	float y = state.axes[1];
+	float jump = static_cast<float>(state.buttons[1]);
+	GameInput gameInput{x,y,jump};
+	return gameInput;
 }
 
-struct JoystickConnectionEvent{
-	int joy;
+struct GamepadConnectionEvent{
+	int gamepadId;
 	int event;
 };
 
-CircularFifo<JoystickConnectionEvent, 4> g_joystick_queue;
+CircularFifo<GamepadConnectionEvent, 4> g_gamepadConnectionEventQueue;
 
-void joystick_callback(int joy, int event) {
+void gamepadCallback(int gamepadId, int event) {
 	// NOTE (feyrob) this seems to be called very unreliably
-	Log::info("input","joystick event");
-	JoystickConnectionEvent joystick_event{joy,event};
-	bool is_success = g_joystick_queue.push(joystick_event);
-	if(!is_success){
-		Log::warning("input","g_joystick_queue full");
+	Log::info("input","gamepad event");
+	GamepadConnectionEvent connectionEvent{gamepadId,event};
+	bool isSuccess = g_gamepadConnectionEventQueue.push(connectionEvent);
+	if(!isSuccess){
+		Log::warning("input","g_gamepadConnectionEventQueue full");
 	}
 }
 
-vector<int> get_joysticks(){
-	vector<int> connected_joysticks;
+vector<int> getGamepadIdList(){
+	vector<int> connectedGamepadIdList;
 	for(int id = 0; id <= GLFW_JOYSTICK_LAST ; ++id){
 		int present = glfwJoystickPresent(id);
 		if(present){
-			connected_joysticks.push_back(id);
+			connectedGamepadIdList.push_back(id);
 		}
 	}
-	return connected_joysticks;
+	return connectedGamepadIdList;
 }
 
-void print_joysticks(vector<int> joysticks){
-	if(joysticks.size() == 0){
-		Log::warning("input","no joysticks found");
+void printGamepadList(vector<int> gamepadIdList){
+	if(gamepadIdList.size() == 0){
+		Log::warning("input","no gamepads found");
 	}
-	for(auto joystick : joysticks) {
-		int axes_count;
-		const float* axes = glfwGetJoystickAxes(joystick, &axes_count);
+	for(auto gamepadId: gamepadIdList) {
+		int axesCount;
+		const float* axes = glfwGetJoystickAxes(gamepadId, &axesCount);
 
-		int button_count;
-		const unsigned char* buttons = glfwGetJoystickButtons(joystick, &button_count);
+		int buttonCount;
+		const unsigned char* buttons = glfwGetJoystickButtons(gamepadId, &buttonCount);
 
-		const char* name = glfwGetJoystickName(joystick);
-		Log::verbose("input", VARSTR2(joystick,2) + " " + VARSTR2(axes_count,2) + " " + VARSTR2(button_count,2) + " " + VARSTR(name));
+		const char* name = glfwGetJoystickName(gamepadId);
+		Log::verbose("input", VARSTR2(gamepadId,2) + " " + VARSTR2(axesCount,2) + " " + VARSTR2(buttonCount,2) + " " + VARSTR(name));
 	}
 }
 
@@ -232,17 +232,17 @@ main(int argc, char** argv) {
 
 	glfwSetKeyCallback(window, key_callback);
 
-	auto joysticks = get_joysticks();
-	print_joysticks(joysticks);
+	auto gamepadIdList = getGamepadIdList();
+	printGamepadList(gamepadIdList);
 
-	glfwSetJoystickCallback(joystick_callback);
+	glfwSetJoystickCallback(gamepadCallback);
 
 	auto init_end_time = now();
 	auto init_duration = init_end_time - start_time;
 
 	Log::info("app",VARSTR(init_duration));
 
-	GameInput game_input;
+	GameInput gameInput;
 	U64 frame_idx(0);
 	bool keep_running = true;
 
@@ -252,19 +252,19 @@ main(int argc, char** argv) {
 	{
 
 		{
-			GameInput new_game_input;
+			GameInput newGameInput;
 			KeyInput key_input;
 			while(g_key_input_queue.pop(key_input)){
 				Log::verbose( "input", String("popped ") + VARSTR(key_input));
 			}
-			for(auto joystick : joysticks) {
-				auto joystick_state = get_joystick_state(joystick);
-				new_game_input = create_game_input(joystick_state);
-				if(game_input.is_equal(new_game_input)){
+			for(auto gamepadId: gamepadIdList) {
+				auto gamepadState = getGamepadState(gamepadId);
+				newGameInput = createGameInput(gamepadState);
+				if(gameInput.is_equal(newGameInput)){
 					// nothing
 				} else{
-					Log::verbose("input/game", VARSTR(game_input) + String(" -> ") + VARSTR(new_game_input));
-					game_input = new_game_input;
+					Log::verbose("input/game", VARSTR(gameInput) + String(" -> ") + VARSTR(newGameInput));
+					gameInput = newGameInput;
 
 					f_alSourcePlay(src);
 				}

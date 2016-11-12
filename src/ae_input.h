@@ -47,7 +47,7 @@ static String str(KeyInput input){
 	return m;
 }
 
-struct JoystickState{
+struct GamepadState{
 	std::vector<float> axes;
 	std::vector<U8> buttons;
 	String to_string(){
@@ -71,12 +71,12 @@ struct JoystickState{
 	}
 };
 
-static String str(JoystickState state){
+static String str(GamepadState state){
 	String m = state.to_string();
 	return m;
 }
 
-JoystickState get_joystick_state(int joystick){
+GamepadState getGamepadState(int joystick){
 	int axes_count;
 	const float* axes = glfwGetJoystickAxes(joystick, &axes_count);
 	std::vector<float> axes_vec;
@@ -89,7 +89,7 @@ JoystickState get_joystick_state(int joystick){
 	button_vec.reserve(button_count);
 	button_vec.assign(buttons, buttons + button_count);
 
-	JoystickState state{axes_vec, button_vec};
+	GamepadState state{axes_vec, button_vec};
 	return state;
 }
 
