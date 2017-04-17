@@ -55,7 +55,7 @@ char const* c_levelStyle[] = {
 
 
 struct LogEntry {
-	Time m_time;
+	TTime m_time;
 	ELevel m_level;
 	String m_ndc;
 	String m_message;
@@ -63,7 +63,7 @@ struct LogEntry {
 	LogEntry(){}
 
 	LogEntry(
-		Time time,
+		TTime time,
 		ELevel level,
 		String ndc,
 		String message
@@ -79,7 +79,7 @@ struct LogEntry {
 		String ndc,
 		String message
 	){
-		Time now = std::chrono::high_resolution_clock::now();
+		TTime now = std::chrono::high_resolution_clock::now();
 		LogEntry log_entry(
 			now,
 			level,
@@ -95,8 +95,8 @@ struct ILoggerBackend{
 };
 
 struct ConsoleLoggerBackend : public ILoggerBackend{
-	Time m_start_time;
-	ConsoleLoggerBackend(Time start_time){
+	TTime m_start_time;
+	ConsoleLoggerBackend(TTime start_time){
 		m_start_time = start_time;
 	}
 
@@ -131,7 +131,7 @@ struct Log {
 	Log() {}
 	~Log() {}
 
-	void add_backend(ILoggerBackend* backend){
+	void addBackend(ILoggerBackend* backend){
 		m_backends.push_back(backend);
 	}
 

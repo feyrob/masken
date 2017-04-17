@@ -27,7 +27,7 @@ if [ $1 = "brun" ]; then
 	enable_run=true
 fi
 
-common_compiler_options="-std=c++1y"
+common_compiler_options="-std=c++1y -Wfatal-errors"
 
 if [ $1 = "fast" ]; then
 	enable_pch=true
@@ -52,7 +52,7 @@ if [ $enable_compile = "true" ]; then
 	echo "# compile"
 	mkdir -p build
 	set -x
-	time clang++ $common_compiler_options -include temp/platform.h src/main.cpp -o build/masken -lglfw -ldl
+	time clang++ $common_compiler_options -include temp/platform.h src/linux_main.cpp -o build/masken -lglfw -ldl -lGL
 	set +x
 fi
 

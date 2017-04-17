@@ -2,7 +2,7 @@
 
 #include "platform.h"
 
-static String str(Duration d){
+static String str(TDuration d){
 	U64 nanos = d.count();
 	U64 seconds = nanos / 1000 / 1000 / 1000;
 	U64 nanos_without_seconds = nanos % (1000 * 1000 * 1000);
@@ -18,8 +18,9 @@ static String str(Duration d){
 	return m;
 }
 
-static String str(Time t){
-	Duration d = t.time_since_epoch();
+static String str(TTime t){
+
+	TDuration d = t.time_since_epoch();
 	String s = str(d);
 	return s;
 }

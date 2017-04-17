@@ -31,6 +31,10 @@
 # vim
 *.swp
 
+# personal practices
+local_notes.md
+
 # project specific
 /build
 
+/Debug/

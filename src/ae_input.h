@@ -2,28 +2,30 @@
 #include "platform.h"
 #include "ae_string.h"
 
-char const* key_action_cstr[] = {
+// TODO(feyrob) move into KeyInput
+char const* c_action_to_name[] = {
 	"release",
 	"press",
 	"repeat"
 };
 
 struct KeyInput{
-	Time time;
+	TTime time;
 	int key;
 	int scancode;
 	int action;
 	int mods;
 
-	String to_string(){
+
+	String ToString(){
 		String m("{ ");
 		m+= VARSTR(time) + " ";
 		m+= VARSTR2(key,4) + " ";
-		const char* key_name = glfwGetKeyName(key, scancode);
-		m+= "key_name:";
-		if(key_name){
+		const char* keyName = glfwGetKeyName(key, scancode);
+		m+= "keyName:";
+		if(keyName){
 			m+= "'";
-			m+= key_name;
+			m+= keyName;
 			m+= "'";
 		}else{
 			m+= "nil";
@@ -31,7 +33,7 @@ struct KeyInput{
 		m+= " ";
 		m+= VARSTR2(scancode,4) + " ";
 		m+= "action:";
-		String a(key_action_cstr[action]);
+		String a(c_action_to_name[action]);
 		while(a.size() < 7){
 			a += " ";
 		}
@@ -43,53 +45,86 @@ struct KeyInput{
 };
 
 static String str(KeyInput input){
-	String m = input.to_string();
+	String m = input.ToString();
 	return m;
 }
 
-struct GamepadState{
+struct ControllerState{
 	std::vector<float> axes;
 	std::vector<U8> buttons;
-	String to_string(){
-		String m("axes:{");
+
+	bool isEqual(ControllerState rhs){
+		if(axes.size() != rhs.axes.size()){
+			return false;
+		}
+		if(buttons.size() != rhs.buttons.size()){
+			return false;
+		}
+		for(int i=0;i<axes.size();++i){
+			if(axes[i] != rhs.axes[i]){
+				return false;
+			}
+		}
+		for(int i=0;i<buttons.size();++i){
+			if(buttons[i] != rhs.buttons[i]){
+				return false;
+			}
+		}
+		return true;
+	}
+
+	String ToString(){
+		String m("{");
+		//m += (VARSTR(gamepadId));
+		//m += " ";
+		m += "axes:{";
 		for(int i = 0; i<axes.size();++i){
+			if(i>0){
+				m+= " ";
+			}
 			m+= str(i);
 			m+= ":";
-			m+= str(axes[i]);
-			m+= " ";
+			m+= str3(axes[i],1,2);
 		}
 		m+="} ";
-		m+= "buttons:{";
+		m+= "btns:{";
 		for(int i = 0; i<buttons.size();++i){
+			if(i>0){
+				m+= " ";
+			}
 			m+= str(i);
 			m+= ":";
 			m+= str(buttons[i]);
-			m+= " ";
 		}
-		m+= "}";
+		m+= "}}";
 		return m;
 	}
 };
 
-static String str(GamepadState state){
-	String m = state.to_string();
+struct ControllerInputEvent{
+	TTime time;
+	ControllerState state;
+};
+
+static String str(ControllerState state){
+	String m = state.ToString();
 	return m;
 }
 
-GamepadState getGamepadState(int joystick){
-	int axes_count;
-	const float* axes = glfwGetJoystickAxes(joystick, &axes_count);
-	std::vector<float> axes_vec;
-	axes_vec.reserve(axes_count);
-	axes_vec.assign(axes, axes + axes_count);
+ControllerState GetControllerState(int gamepadId){
+	int axesCount;
+	const float* axes = glfwGetJoystickAxes(gamepadId, &axesCount);
+	std::vector<float> axesVec;
+	axesVec.reserve(axesCount);
+	axesVec.assign(axes, axes + axesCount);
 
-	int button_count;
-	const unsigned char* buttons = glfwGetJoystickButtons(joystick, &button_count);
-	std::vector<U8> button_vec;
-	button_vec.reserve(button_count);
-	button_vec.assign(buttons, buttons + button_count);
+	int buttonCount;
+	const unsigned char* buttons = glfwGetJoystickButtons(gamepadId, &buttonCount);
+	std::vector<U8> buttonList;
+	buttonList.reserve(buttonCount);
+	buttonList.assign(buttons, buttons + buttonCount);
 
-	GamepadState state{axes_vec, button_vec};
+	ControllerState state{axesVec, buttonList};
 	return state;
 }
 
