@@ -362,7 +362,7 @@ main(int argc, char** argv) {
 			keep_running = false;
 		}
 		if(keep_running){
-			AeBusySleep(Seconds(0.005));
+			//AeBusySleep(Seconds(0.005));
 		}
 
 		U64 frameEndCyc = cyc();

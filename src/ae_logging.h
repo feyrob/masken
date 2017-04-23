@@ -33,7 +33,7 @@ char const* c_levelStr[] = {
 	"debug", 
 	"verbose", 
 	"info", 
-	"attention", 
+	"notice", 
 	"warning", 
 	"error"
 };
@@ -107,7 +107,7 @@ struct ConsoleLoggerBackend : public ILoggerBackend{
 		String levelStr(
 			c_levelStr[log_entry.m_level]
 		);
-		while(levelStr.size() < 9){
+		while(levelStr.size() < 7){
 			levelStr += " ";
 		}
 		auto style = c_levelStyle[log_entry.m_level];
@@ -116,7 +116,7 @@ struct ConsoleLoggerBackend : public ILoggerBackend{
 
 		String styledLevelStr = style + levelStr + styleResetAll; 
 
-		String m = duration_since_start_str + " " + styledLevelStr + " [" + log_entry.m_ndc + "] " + log_entry.m_message;
+		String m = duration_since_start_str + " " + styledLevelStr + " " + styleWhiteBright + "/" + log_entry.m_ndc + styleResetAll + "  " + log_entry.m_message;
 		
 		printf(
 			"%s\n",
