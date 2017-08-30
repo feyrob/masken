@@ -38,3 +38,10 @@ local_notes.md
 /build
 
 /Debug/
+
+
+# Files created by IDEs
+## Eclipse
+/.externalToolBuilders
+/.settings
+

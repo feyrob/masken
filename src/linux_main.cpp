@@ -21,18 +21,18 @@ typedef void F_alSourcePlay(ALuint source);
 
 #include "app.cpp"
 
-CircularFifo<KeyInput, 16> g_KeyInputQueue;
+CircularFifo<KeyInput, 16> g_keyboardInputQueue;
 
 // TODO(feyrob) get from some math header?
 global const double c_pi = 3.14159265358979323846;
 
 
-internal void 
-AeBusySleep(TDuration duration){
+internal void
+aeBusySleep(TDuration duration){
 	TTime startTime = Now();
 	TTime targetTime = startTime + duration;
 	while(true){
-		TTime currentTime = Now(); 
+		TTime currentTime = Now();
 		if(currentTime < targetTime){
 			// keep sleeping
 		}else{
@@ -41,7 +41,7 @@ AeBusySleep(TDuration duration){
 	}
 }
 
-U64 
+U64
 cyc(){
 	U32 lo;
 	U32 hi;
@@ -49,12 +49,12 @@ cyc(){
 	return ((U64)hi << 32) | lo;
 }
 
-internal void 
+internal void
 KeyEventCallback(
-	GLFWwindow* window, 
-	int key, 
-	int scancode, 
-	int action, 
+	GLFWwindow* window,
+	int key,
+	int scancode,
+	int action,
 	int mods
 ) {
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS){
@@ -62,7 +62,7 @@ KeyEventCallback(
 	}
 	auto pressTime = Now();
 	KeyInput keyInput{pressTime, key, scancode, action,mods};
-	bool queueSuccess = g_KeyInputQueue.push(keyInput);
+	bool queueSuccess = g_keyboardInputQueue.push(keyInput);
 	if(!queueSuccess){
 		Log::warning("input","g_KeyInputQueue full");
 	}
@@ -84,12 +84,12 @@ struct GameInput{
 	}
 };
 
-internal String 
+internal String
 str(GameInput gi){
 	return gi.toString();
 }
 
-GameInput 
+GameInput
 createGameInput(ControllerState state){
 	float x = state.axes[0];
 	float y = state.axes[1];
@@ -116,7 +116,7 @@ gamepadConnectionEventCallback(int gamepadId, int event) {
 	}
 }
 
-vector<int> 
+vector<int>
 getGamepadIdList(){
 	vector<int> connectedGamepadIdList;
 	for(int id = 0; id <= GLFW_JOYSTICK_LAST ; ++id){
@@ -128,7 +128,7 @@ getGamepadIdList(){
 	return connectedGamepadIdList;
 }
 
-void 
+void
 printGamepadList(vector<int> gamepadIdList){
 	if(gamepadIdList.size() == 0){
 		Log::warning("input","no gamepads found");
@@ -150,7 +150,7 @@ const int c_audioBufferCount= 7;
 
 ALuint	g_audioBuffers[c_audioBufferCount];
 
-map<int,ControllerState> 
+map<int,ControllerState>
 GetControllerStates(){
 	auto gamepadIdList = getGamepadIdList();
 
@@ -167,10 +167,10 @@ int
 main(int argc, char** argv) {
 
 	// count initialization time as time of first frame
-	U64 frameStartCyc = cyc();
+	U64 frameStartCyIdx = cyc();
 	auto startTime = Now();
 	TTime frameStartTime = startTime;
-	
+
 	TTime nextPerfPrintTime = startTime + Seconds(1);
 
 	auto consoleLoggerBackend = new ConsoleLoggerBackend(startTime);
@@ -265,7 +265,7 @@ main(int argc, char** argv) {
 	//GLuint vertex_shader;
 	//GLuint fragment_shader;
 	//GLuint program;
-	//GLint mvp_location; 
+	//GLint mvp_location;
 	//GLint vpos_location;
 	//GLint vcol_location;
 
@@ -290,15 +290,15 @@ main(int argc, char** argv) {
 
 	Log::attention("app",VARSTR(initDuration));
 
-	bool keep_running = true;
+	bool keepRunning = true;
 
 
 	//float pos = 0.0f;
-	
+
 	// can be removed once the game service handles inputs
 	map<int,ControllerState> prevControllerStates;
 
-	vector<U64> frameCycs;
+	vector<U64> frameCyCountList;
 	vector<TDuration> frameDurations;
 
 
@@ -308,7 +308,7 @@ main(int argc, char** argv) {
 	//U64 worstFrameCyc = 0;
 	//Duration worstFrameDuration = 0;
 
-	while (keep_running)
+	while (keepRunning)
 	{
 		auto currentControllerStates = GetControllerStates();
 		for(auto entry : currentControllerStates){
@@ -326,6 +326,18 @@ main(int argc, char** argv) {
 			if(!same){
 				Log::verbose("input",VARSTR(gamepadState));
 			}
+		}
+
+
+		bool b_checkKeyboard = true;
+		while(b_checkKeyboard){
+			KeyInput keyInput;
+			bool b_hadKeyInput = g_keyboardInputQueue.pop(keyInput);
+			if(b_hadKeyInput){
+				Log::verbose("input", VARSTR(keyInput));
+			}
+			b_checkKeyboard = b_hadKeyInput;
+
 		}
 
 		//for(auto state: currentControllerStates){
@@ -359,24 +371,24 @@ main(int argc, char** argv) {
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 		if(glfwWindowShouldClose(window)){
-			keep_running = false;
+			keepRunning = false;
 		}
-		if(keep_running){
-			//AeBusySleep(Seconds(0.005));
+		if(keepRunning){
+			aeBusySleep(Seconds(0.005));
 		}
 
-		U64 frameEndCyc = cyc();
+		U64 frameEndCyIdx = cyc();
 		TTime frameEndTime = Now();
 
-		auto frameCyc = frameEndCyc - frameStartCyc;
+		auto frameCyCount = frameEndCyIdx - frameStartCyIdx;
 		auto frameDuration = frameEndTime - frameStartTime;
 
 		if(nextPerfPrintTime < frameEndTime){
 			U64 worstWindowFrameCyc(0);
 			TDuration worstWindowFrameDuration = Seconds(0);
 			for(int i = perfWindowStartIdx;i<frameIdx;++i){
-				if(worstWindowFrameCyc < frameCycs[i]){
-					worstWindowFrameCyc = frameCycs[i];
+				if(worstWindowFrameCyc < frameCyCountList[i]){
+					worstWindowFrameCyc = frameCyCountList[i];
 				}
 				if(worstWindowFrameDuration < frameDurations[i]){
 					worstWindowFrameDuration = frameDurations[i];
@@ -392,22 +404,22 @@ main(int argc, char** argv) {
 			//Log::debug("x",VARSTR(ratio));
 			// prints ~1.5
 
-			// 1hz                second 
+			// 1hz                second
 			// 1khz 1 000         milli
 			// 1mhz 1 000 000     micro
 			// 1ghz 1 000 000 000 nano
 
 			Log::verbose("perf",VARSTR(frameIdx) + " " + VARSTR(worstWindowFrameCyc) + " " + VARSTR(worstWindowFrameDuration) + " (" + VARSTR(fps)+  ")");
 
-			nextPerfPrintTime = nextPerfPrintTime + Seconds(1);
+			nextPerfPrintTime = nextPerfPrintTime + Seconds(10);
 			perfWindowStartIdx = frameIdx;
 		}
 
-		frameCycs.push_back(frameCyc);
+		frameCyCountList.push_back(frameCyCount);
 		frameDurations.push_back(frameDuration);
 
 		// use the end time of the current frame as start time of the next frame
-		frameStartCyc = frameEndCyc;
+		frameStartCyIdx = frameEndCyIdx;
 		frameStartTime = frameEndTime;
 
 		prevControllerStates = currentControllerStates;
