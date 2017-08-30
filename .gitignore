@@ -44,4 +44,5 @@ local_notes.md
 ## Eclipse
 /.externalToolBuilders
 /.settings
+/.cproject
 
